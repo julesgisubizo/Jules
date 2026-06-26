@@ -24,6 +24,22 @@ export interface User {
   watchlist?: string[]; // movieIds
 }
 
+export interface Episode {
+  id: string;
+  episodeNumber: number;
+  title: string;
+  watch_link: string;
+  download_link?: string;
+  duration?: string;
+}
+
+export interface Season {
+  id: string;
+  seasonNumber: number;
+  title: string;
+  episodes: Episode[];
+}
+
 export interface Movie {
   id: string;
   title: string;
@@ -49,6 +65,7 @@ export interface Movie {
   createdAt: string;
   updatedAt: string;
   isFeatured?: boolean;
+  seasons?: Season[];
 }
 
 export interface Comment {
@@ -91,6 +108,7 @@ export interface Document {
   year: number;
   document_type: string; // PDF, Book, Notes, Past Paper
   createdAt: string;
+  downloadsCount?: number;
 }
 
 export interface DownloadTracking {
@@ -108,4 +126,26 @@ export interface SiteSettings {
   footerText: string;
   heroBannerTitle: string;
   heroBannerSubtitle: string;
+  enableDonations?: boolean;
 }
+
+export interface SupportMessage {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  message: string;
+  createdAt: string;
+  isRead?: boolean;
+}
+
+export interface Donation {
+  id: string;
+  donorName: string;
+  donorPhone: string;
+  amount: number;
+  transactionReference: string;
+  status: "pending" | "successful" | "failed";
+  createdAt: string;
+}
+

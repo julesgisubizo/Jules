@@ -22,7 +22,7 @@ export default function MovieCard({ movie, onClick }: MovieCardProps) {
       {/* Thumbnail Aspect Ratio */}
       <div className="relative aspect-[2/3] overflow-hidden bg-zinc-950">
         <img
-          src={movie.poster_image}
+          src={movie.poster_image || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=600'}
           alt={movie.title}
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -33,12 +33,19 @@ export default function MovieCard({ movie, onClick }: MovieCardProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-[#0e030e] via-transparent to-[#00000030] opacity-90 transition-opacity" />
 
         {/* Badges on Top */}
-        <div className="absolute top-2.5 left-2.5 flex flex-col space-y-1.5">
+        <div className="absolute top-2.5 left-2.5 flex flex-col space-y-1.5 items-start">
           <span className="px-2 py-0.5 text-[10px] font-bold font-mono tracking-widest bg-[#e95420] text-white rounded shadow-sm uppercase">
             {movie.quality}
           </span>
           <span className="px-1.5 py-0.5 text-[9px] font-semibold font-mono bg-black/60 text-gray-300 rounded backdrop-blur-xs">
             {movie.language}
+          </span>
+          <span className={`px-1.5 py-0.5 text-[9px] font-bold font-mono rounded tracking-wider text-white shadow-sm uppercase ${
+            movie.seasons && movie.seasons.length > 0
+              ? 'bg-[#77216f] border border-fuchsia-500/20'
+              : 'bg-teal-700/90 border border-teal-500/20'
+          }`}>
+            {movie.seasons && movie.seasons.length > 0 ? 'Season' : 'Film'}
           </span>
         </div>
 

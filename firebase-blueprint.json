@@ -1,0 +1,21 @@
+{
+  "entities": {
+    "ubuntu_flimsy_data": {
+      "title": "Ubuntu Flimsy Data",
+      "description": "Durable synchronization of all app database entities.",
+      "type": "object",
+      "properties": {
+        "list": {
+          "type": "array",
+          "description": "Dynamic array of data structures of this table."
+        }
+      }
+    }
+  },
+  "firestore": {
+    "ubuntu_flimsy_data/{key}": {
+      "schema": "ubuntu_flimsy_data",
+      "description": "Synchronized collection document for each app data type."
+    }
+  }
+}

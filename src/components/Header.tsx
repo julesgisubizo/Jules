@@ -4,8 +4,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Film, BookOpen, Search, Heart, User, Settings, LogOut, Menu, X, HelpCircle, Info, Bell, Smartphone, Download, Sparkles, Check } from 'lucide-react';
+import { Film, BookOpen, Search, Heart, User, Settings, LogOut, Menu, X, HelpCircle, Info, Bell, Smartphone, Download, Sparkles, Check, FolderOpen, Upload } from 'lucide-react';
 import { UserRole } from '../types';
+import { apiFetch as fetch } from '../apiFetch';
 
 interface HeaderProps {
   currentView: string;
@@ -14,6 +15,8 @@ interface HeaderProps {
   onLogout: () => void;
   onSearch: (query: string) => void;
   siteName: string;
+  onDonateClick?: () => void;
+  enableDonations?: boolean;
 }
 
 export default function Header({
@@ -22,13 +25,72 @@ export default function Header({
   currentUser,
   onLogout,
   onSearch,
-  siteName
+  siteName,
+  onDonateClick,
+  enableDonations = false
 }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [seenNotifIds, setSeenNotifIds] = useState<Set<string>>(new Set());
+  const [notifPermission, setNotifPermission] = useState<string>(
+    typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default'
+  );
+
+  // Request browser desktop / operating system notification permissions
+  const handleRequestNotifPermission = () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      alert("This device's web browser does not support native desktop notifications.");
+      return;
+    }
+    
+    Notification.requestPermission().then((permission) => {
+      setNotifPermission(permission);
+      if (permission === 'granted') {
+        // Send a sample system welcome notification immediately
+        try {
+          new window.Notification("Ubuntu Flimsy Sync Authorized", {
+            body: "Great! You will now receive native live alerts on this device even when the tab is in the background.",
+            icon: '/assets/logo.png',
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    });
+  };
+
+  // Test native operating system level notification popup on screen
+  const handleSendTestNotification = () => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new window.Notification("🎬 Dynamic Device Alert Test", {
+          body: "This is a real-time Operating System notification showing on your device from Ubuntu Flimsy! Works when minimized or in background.",
+          icon: '/assets/logo.png',
+        });
+        
+        // Play audio chime
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, audioContext.currentTime); // D5
+        osc.frequency.setValueAtTime(880.00, audioContext.currentTime + 0.12); // A5
+        gain.gain.setValueAtTime(0.12, audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
+        osc.start();
+        osc.stop(audioContext.currentTime + 0.4);
+      } catch (err) {
+        console.error("Test notification failed:", err);
+      }
+    } else {
+      handleRequestNotifPermission();
+    }
+  };
 
   // Fetch PWA notification stream dynamically if signed in
   useEffect(() => {
@@ -42,6 +104,55 @@ export default function Header({
         .then(data => {
           if (Array.isArray(data)) {
             setNotifications(data);
+            
+            // Sync with Native OS Notifications for new alerts
+            setSeenNotifIds(prev => {
+              const newSet = new Set(prev);
+              let changed = false;
+              
+              // If we are tracking seen notifications for the first time, backfill ancient items without showing OS alerts
+              if (prev.size === 0) {
+                data.forEach((n: any) => newSet.add(n.id));
+                return newSet;
+              }
+              
+              // On consecutive checks, alert user of new arrivals
+              data.forEach((notif: any) => {
+                if (!newSet.has(notif.id)) {
+                  newSet.add(notif.id);
+                  changed = true;
+                  
+                  // Trigger native notification if system permissions granted
+                  if (!notif.isRead && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+                    try {
+                      new window.Notification(notif.title, {
+                        body: notif.body,
+                        icon: '/assets/logo.png',
+                        tag: notif.id,
+                      });
+                      
+                      // Sound chime
+                      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+                      const osc = audioContext.createOscillator();
+                      const gain = audioContext.createGain();
+                      osc.connect(gain);
+                      gain.connect(audioContext.destination);
+                      osc.type = 'sine';
+                      osc.frequency.setValueAtTime(523.25, audioContext.currentTime);
+                      osc.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1);
+                      gain.gain.setValueAtTime(0.15, audioContext.currentTime);
+                      gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
+                      osc.start();
+                      osc.stop(audioContext.currentTime + 0.35);
+                    } catch (e) {
+                      console.error("Error creating native alert:", e);
+                    }
+                  }
+                }
+              });
+              
+              return changed ? newSet : prev;
+            });
           }
         })
         .catch(() => {});
@@ -68,11 +179,14 @@ export default function Header({
 
   const menuItems = [
     { view: 'home', label: 'Home', icon: Film },
+    { view: 'watchlist', label: 'Watch', icon: Heart },
+    { view: 'upload-video', label: 'Upload Stream', icon: Upload },
     { view: 'movies', label: 'Movies', icon: Film },
     { view: 'trending', label: 'Trending', icon: Film },
-    { view: 'new-uploads', label: 'New Releases', icon: Film },
-    { view: 'documents', label: 'Educational Resources', icon: BookOpen },
-    { view: 'downloads', label: 'Install App / APK', icon: Smartphone },
+    { view: 'new-uploads', label: 'New', icon: Film },
+    { view: 'documents', label: 'Educational', icon: BookOpen },
+    { view: 'downloads', label: 'Install', icon: Smartphone },
+    { view: 'local-explorer', label: 'Device', icon: FolderOpen },
     { view: 'about', label: 'About', icon: Info },
     { view: 'faq', label: 'FAQs', icon: HelpCircle },
   ];
@@ -112,6 +226,19 @@ export default function Header({
                 </button>
               );
             })}
+
+            {/* MTN MoMo Donation CTA link */}
+            {enableDonations && (
+              <button
+                onClick={onDonateClick}
+                className="flex items-center space-x-1 px-2.5 py-1.5 bg-yellow-400 hover:bg-yellow-300 text-black text-xs font-bold uppercase rounded-lg shadow-md transition duration-150 animate-pulse"
+                id="header-donate-btn-desktop"
+                title="Donate with MTN MoMo"
+              >
+                <Heart className="w-3.5 h-3.5 fill-current text-red-600" />
+                <span>Donate</span>
+              </button>
+            )}
           </nav>
 
           {/* Search, Watchlist, Auth Controls */}
@@ -123,7 +250,7 @@ export default function Header({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search movies & docs..."
-                className="w-48 lg:w-64 bg-[#23092a] text-sm text-gray-200 placeholder-gray-400 pl-10 pr-4 py-1.5 rounded-full border border-[#431952] focus:outline-none focus:border-[#e95420] focus:ring-1 focus:ring-[#e95420] transition-all"
+                className="w-48 hover:w-56 focus:w-72 lg:w-64 lg:hover:w-72 lg:focus:w-96 bg-[#23092a] text-sm text-gray-200 placeholder-gray-400 pl-10 pr-4 py-1.5 rounded-full border border-[#431952] focus:outline-none focus:border-[#e95420] focus:ring-1 focus:ring-[#e95420] transition-all duration-300 ease-in-out"
                 id="search-input-desktop"
               />
               <Search className="absolute left-3.5 top-2.5 w-4.5 h-4.5 text-gray-400" />
@@ -214,6 +341,48 @@ export default function Header({
                             </span>
                           </div>
                         ))
+                      )}
+                    </div>
+
+                    {/* Device Notification Integration Controller info block */}
+                    <div className="p-3.5 bg-[#1f0927] border-t border-[#310c3b] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono text-gray-300">Device Status:</span>
+                        <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded uppercase ${
+                          notifPermission === 'granted' 
+                            ? 'bg-green-500/10 text-green-400 border border-green-500/30' 
+                            : notifPermission === 'denied'
+                            ? 'bg-red-500/10 text-red-00'
+                            : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/30'
+                        }`}>
+                          {notifPermission}
+                        </span>
+                      </div>
+                      
+                      {notifPermission !== 'granted' ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRequestNotifPermission();
+                          }}
+                          className="w-full py-1.5 bg-[#e95420]/20 hover:bg-[#e95420] text-[#e95420] hover:text-white border border-[#e95420]/35 text-[10px] font-bold uppercase rounded-lg transition duration-200 tracking-wider flex items-center justify-center space-x-1"
+                        >
+                          <Smartphone className="w-3 h-3" />
+                          <span>Enable External Alerts</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSendTestNotification();
+                          }}
+                          className="w-full py-1.5 bg-green-500/20 hover:bg-green-500 text-green-400 hover:text-white border border-green-500/35 text-[10px] font-bold uppercase rounded-lg transition duration-200 tracking-wider flex items-center justify-center space-x-1"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          <span>Send Test Device Alert</span>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -407,6 +576,21 @@ export default function Header({
                 </button>
               );
             })}
+
+            {/* MTN MoMo Mobile Donate Option */}
+            {enableDonations && (
+              <button
+                onClick={() => {
+                  if (onDonateClick) onDonateClick();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-3 py-2.5 rounded-md text-base font-bold bg-yellow-400 text-black flex items-center space-x-3 transition-colors hover:bg-yellow-300 mt-2"
+                id="header-donate-btn-mobile"
+              >
+                <Heart className="w-5 h-5 fill-current text-red-600 animate-pulse animate-duration-1000" />
+                <span>Donate with MTN MoMo</span>
+              </button>
+            )}
           </div>
 
           {/* User Auth Info Mobile */}
@@ -415,7 +599,7 @@ export default function Header({
               <div className="space-y-2">
                 <div className="flex items-center space-x-3 px-3 py-2">
                   <img
-                    src={currentUser.avatar}
+                    src={currentUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80'}
                     alt="avatar"
                     className="w-10 h-10 rounded-full border border-[#e95420]"
                   />

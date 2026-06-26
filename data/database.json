@@ -1,0 +1,824 @@
+{
+  "users": [
+    {
+      "createdAt": "2026-06-22T08:32:02.564Z",
+      "role": "admin",
+      "email": "admin@flimsy.com",
+      "watchlist": [
+        "movie-7ag5d2s"
+      ],
+      "id": "admin-id-123",
+      "name": "Ubuntu Admin",
+      "password": "$2b$10$SDD8BkAwQ0h2faIf.9jjweycYRXUkrw4BpV6hI/oDzFqLkVmKT4AW",
+      "avatar": "data:image/jpeg;base64,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"
+    }
+  ],
+  "movies": [
+    {
+      "likes": 1,
+      "year": 2026,
+      "cover_image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMNpPzkH-l4-cdnW8ztZ1jhJm8JZyQyGTGazxmFUjK7w&s=10https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMNpPzkH-l4-cdnW8ztZ1jhJm8JZyQyGTGazxmFUjK7w&s=10",
+      "seasons": [
+        {
+          "episodes": [
+            {
+              "watch_link": "https://hgcloud.to/l9c7h1pbxy98",
+              "id": "ep_1782211576507",
+              "episodeNumber": 1,
+              "duration": "45m",
+              "download_link": "https://www.mediafire.com/file/1rk282mss9r2e19/Blade_Man_Ep1_Hd.mp4/file",
+              "title": "Ep 1"
+            },
+            {
+              "episodeNumber": 2,
+              "id": "ep_1782211589517",
+              "watch_link": "https://www.mediafire.com/file/4ts0xvd84ye5hvx/Blade+Man+Ep2+Hd.mp4/file",
+              "title": "Ep 2",
+              "download_link": "https://www.mediafire.com/file/4ts0xvd84ye5hvx/Blade+Man+Ep2+Hd.mp4/file",
+              "duration": "45m"
+            }
+          ],
+          "title": "S 1",
+          "seasonNumber": 1,
+          "id": "season_1782211560031"
+        }
+      ],
+      "isFeatured": true,
+      "views": 16,
+      "createdAt": "2026-06-23T11:52:12.628Z",
+      "download_link": "https://www.mediafire.com/file/1rk282mss9r2e19/Blade_Man_Ep1_Hd.mp4/file",
+      "slug": "blade-man-by-rock",
+      "updatedAt": "2026-06-23T11:52:12.628Z",
+      "quality": "Full HD",
+      "language": "English",
+      "trailer_link": "https://www.youtube.com/watch?v=eOrNdBpGMv8",
+      "duration": "143m",
+      "description": "good movie",
+      "genre": [
+        "Action"
+      ],
+      "title": "Blade Man by ROCK",
+      "watch_source_type": "Link",
+      "commentsCount": 0,
+      "country": "Corea",
+      "poster_image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMNpPzkH-l4-cdnW8ztZ1jhJm8JZyQyGTGazxmFUjK7w&s=10",
+      "watch_link": "https://hgcloud.to/l9c7h1pbxy98",
+      "tags": [
+        "Season"
+      ],
+      "uploaded_video_path": "",
+      "id": "movie-k20815z"
+    }
+  ],
+  "comments": [],
+  "chatRooms": [
+    {
+      "isActive": true,
+      "movieId": "movie-k20815z",
+      "createdAt": "2026-06-23T11:52:12.628Z",
+      "id": "room-movie-k20815z",
+      "roomName": "Blade Man by ROCK Discussion"
+    }
+  ],
+  "chatMessages": [
+    {
+      "userName": "UbuntuDev_99",
+      "id": "bot-mqqhp75c",
+      "roomId": "room-movie-bsxro6r",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev",
+      "userId": "bot-user-id",
+      "message": "This player has super clean speed control.",
+      "createdAt": "2026-06-23T10:16:40.560Z"
+    },
+    {
+      "message": "Buffering holds up nicely on my 4G, wow!",
+      "createdAt": "2026-06-23T10:22:19.015Z",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "id": "bot-mqqhwgav",
+      "roomId": "room-movie-bsxro6r",
+      "userName": "FlimsyFanatic"
+    },
+    {
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev",
+      "createdAt": "2026-06-23T10:25:14.541Z",
+      "message": "Downloading this for S6 exam break tomorrow.",
+      "userName": "UbuntuDev_99",
+      "roomId": "room-movie-bsxro6r",
+      "id": "bot-mqqi07ql"
+    },
+    {
+      "userName": "Kari_Vortex",
+      "roomId": "room-movie-7ag5d2s",
+      "id": "bot-mqqk14yj",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "userId": "bot-user-id",
+      "createdAt": "2026-06-23T11:21:56.827Z",
+      "message": "That cinematography right here is incredible!"
+    },
+    {
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "message": "Downloading this for S6 exam break tomorrow.",
+      "createdAt": "2026-06-23T11:22:00.928Z",
+      "userName": "Kari_Vortex",
+      "id": "bot-mqqk184g",
+      "roomId": "room-movie-7ag5d2s"
+    },
+    {
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "userId": "bot-user-id",
+      "createdAt": "2026-06-23T11:22:12.543Z",
+      "message": "Who else is accessing the past papers PDF in the other tab?",
+      "userName": "Gera_Cinema",
+      "roomId": "room-movie-7ag5d2s",
+      "id": "bot-mqqk1h33"
+    },
+    {
+      "createdAt": "2026-06-23T11:23:21.200Z",
+      "message": "Ubuntu orange layout looks so clean on this screen.",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "userId": "bot-user-id",
+      "roomId": "room-movie-7ag5d2s",
+      "id": "bot-mqqk2y28",
+      "userName": "Gera_Cinema"
+    },
+    {
+      "roomId": "room-movie-7ag5d2s",
+      "id": "bot-mqqk3hxl",
+      "userName": "Kari_Vortex",
+      "createdAt": "2026-06-23T11:23:46.953Z",
+      "message": "That cinematography right here is incredible!",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen"
+    },
+    {
+      "createdAt": "2026-06-23T11:53:10.448Z",
+      "message": "That cinematography right here is incredible!",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "userId": "bot-user-id",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqql5ank",
+      "userName": "FlimsyFanatic"
+    },
+    {
+      "userName": "Kari_Vortex",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqql6erz",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "createdAt": "2026-06-23T11:54:02.447Z",
+      "message": "Ubuntu orange layout looks so clean on this screen."
+    },
+    {
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "userId": "bot-user-id",
+      "message": "That cinematography right here is incredible!",
+      "createdAt": "2026-06-23T11:54:58.448Z",
+      "userName": "Gera_Cinema",
+      "id": "bot-mqql7lzk",
+      "roomId": "room-movie-k20815z"
+    },
+    {
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqla0jt",
+      "userName": "UbuntuDev_99",
+      "createdAt": "2026-06-23T11:56:50.633Z",
+      "message": "Downloading this for S6 exam break tomorrow.",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev",
+      "userId": "bot-user-id"
+    },
+    {
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqlaixm",
+      "userName": "Kari_Vortex",
+      "createdAt": "2026-06-23T11:57:14.458Z",
+      "message": "Wait, Sintel is finally finding her dragon!",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "userId": "bot-user-id"
+    },
+    {
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "userId": "bot-user-id",
+      "message": "Downloading this for S6 exam break tomorrow.",
+      "createdAt": "2026-06-23T11:58:42.440Z",
+      "userName": "Kari_Vortex",
+      "id": "bot-mqqlcetk",
+      "roomId": "room-movie-k20815z"
+    },
+    {
+      "userName": "FlimsyFanatic",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqlco3m",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "userId": "bot-user-id",
+      "createdAt": "2026-06-23T11:58:54.466Z",
+      "message": "Who else is accessing the past papers PDF in the other tab?"
+    },
+    {
+      "userName": "Gera_Cinema",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqldvay",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "createdAt": "2026-06-23T11:59:50.458Z",
+      "message": "Wait, Sintel is finally finding her dragon!"
+    },
+    {
+      "message": "This player has super clean speed control.",
+      "createdAt": "2026-06-23T11:59:54.457Z",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "userId": "bot-user-id",
+      "id": "bot-mqqldye1",
+      "roomId": "room-movie-k20815z",
+      "userName": "Gera_Cinema"
+    },
+    {
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev",
+      "userId": "bot-user-id",
+      "message": "Downloading this for S6 exam break tomorrow.",
+      "createdAt": "2026-06-23T12:00:14.477Z",
+      "userName": "UbuntuDev_99",
+      "id": "bot-mqqledu5",
+      "roomId": "room-movie-k20815z"
+    },
+    {
+      "userName": "Gera_Cinema",
+      "id": "bot-mqqlegy8",
+      "roomId": "room-movie-k20815z",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "message": "Who else is accessing the past papers PDF in the other tab?",
+      "createdAt": "2026-06-23T12:00:18.512Z"
+    },
+    {
+      "id": "bot-mqqlek0j",
+      "roomId": "room-movie-k20815z",
+      "userName": "Kari_Vortex",
+      "message": "Downloading this for S6 exam break tomorrow.",
+      "createdAt": "2026-06-23T12:00:22.483Z",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "userId": "bot-user-id"
+    },
+    {
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev",
+      "createdAt": "2026-06-23T12:00:54.671Z",
+      "message": "Ubuntu orange layout looks so clean on this screen.",
+      "userName": "UbuntuDev_99",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqlf8un"
+    },
+    {
+      "userName": "Gera_Cinema",
+      "id": "bot-mqqljiyy",
+      "roomId": "room-movie-k20815z",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "userId": "bot-user-id",
+      "message": "Buffering holds up nicely on my 4G, wow!",
+      "createdAt": "2026-06-23T12:04:14.410Z"
+    },
+    {
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev",
+      "message": "Who else is accessing the past papers PDF in the other tab?",
+      "createdAt": "2026-06-23T12:05:06.602Z",
+      "userName": "UbuntuDev_99",
+      "id": "bot-mqqlkn8q",
+      "roomId": "room-movie-k20815z"
+    },
+    {
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqllo4s",
+      "userName": "UbuntuDev_99",
+      "createdAt": "2026-06-23T12:05:54.412Z",
+      "message": "Buffering holds up nicely on my 4G, wow!",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev",
+      "userId": "bot-user-id"
+    },
+    {
+      "message": "Wait, Sintel is finally finding her dragon!",
+      "createdAt": "2026-06-23T12:06:14.433Z",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev",
+      "userId": "bot-user-id",
+      "id": "bot-mqqlm3kx",
+      "roomId": "room-movie-k20815z",
+      "userName": "UbuntuDev_99"
+    },
+    {
+      "createdAt": "2026-06-23T12:07:18.409Z",
+      "message": "Downloading this for S6 exam break tomorrow.",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "userId": "bot-user-id",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqlngy1",
+      "userName": "Gera_Cinema"
+    },
+    {
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "userId": "bot-user-id",
+      "createdAt": "2026-06-23T12:08:38.455Z",
+      "message": "Who else is accessing the past papers PDF in the other tab?",
+      "userName": "Gera_Cinema",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqlp6pj"
+    },
+    {
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "userId": "bot-user-id",
+      "createdAt": "2026-06-23T12:11:18.581Z",
+      "message": "Buffering holds up nicely on my 4G, wow!",
+      "userName": "Kari_Vortex",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqlsm9h"
+    },
+    {
+      "id": "bot-mqqlsz55",
+      "roomId": "room-movie-k20815z",
+      "userName": "FlimsyFanatic",
+      "message": "Who else is accessing the past papers PDF in the other tab?",
+      "createdAt": "2026-06-23T12:11:35.273Z",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic"
+    },
+    {
+      "id": "bot-mqqltzi8",
+      "roomId": "room-movie-k20815z",
+      "userName": "UbuntuDev_99",
+      "message": "Downloading this for S6 exam break tomorrow.",
+      "createdAt": "2026-06-23T12:12:22.400Z",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev"
+    },
+    {
+      "createdAt": "2026-06-23T12:12:38.424Z",
+      "message": "This player has super clean speed control.",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "userId": "bot-user-id",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqlubvc",
+      "userName": "FlimsyFanatic"
+    },
+    {
+      "userName": "FlimsyFanatic",
+      "id": "bot-mqqlwn7x",
+      "roomId": "room-movie-k20815z",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "userId": "bot-user-id",
+      "message": "That cinematography right here is incredible!",
+      "createdAt": "2026-06-23T12:14:26.445Z"
+    },
+    {
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev",
+      "createdAt": "2026-06-23T12:15:10.457Z",
+      "message": "Ubuntu orange layout looks so clean on this screen.",
+      "userName": "UbuntuDev_99",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqlxl6h"
+    },
+    {
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqm02nr",
+      "userName": "Kari_Vortex",
+      "createdAt": "2026-06-23T12:17:06.423Z",
+      "message": "Ubuntu orange layout looks so clean on this screen.",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "userId": "bot-user-id"
+    },
+    {
+      "createdAt": "2026-06-23T12:19:18.598Z",
+      "message": "Who else is accessing the past papers PDF in the other tab?",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqm2wna",
+      "userName": "Gera_Cinema"
+    },
+    {
+      "userName": "Kari_Vortex",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqm3ugu",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "createdAt": "2026-06-23T12:20:02.430Z",
+      "message": "Wait, Sintel is finally finding her dragon!"
+    },
+    {
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqm4g2b",
+      "userName": "Kari_Vortex",
+      "createdAt": "2026-06-23T12:20:30.419Z",
+      "message": "Buffering holds up nicely on my 4G, wow!",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen"
+    },
+    {
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev",
+      "userId": "bot-user-id",
+      "message": "Downloading this for S6 exam break tomorrow.",
+      "createdAt": "2026-06-23T12:20:46.778Z",
+      "userName": "UbuntuDev_99",
+      "id": "bot-mqqm4soq",
+      "roomId": "room-movie-k20815z"
+    },
+    {
+      "userName": "FlimsyFanatic",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqm5e06",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "createdAt": "2026-06-23T12:21:14.406Z",
+      "message": "That cinematography right here is incredible!"
+    },
+    {
+      "userName": "Kari_Vortex",
+      "id": "bot-mqqm5zo2",
+      "roomId": "room-movie-k20815z",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "userId": "bot-user-id",
+      "message": "Who else is accessing the past papers PDF in the other tab?",
+      "createdAt": "2026-06-23T12:21:42.482Z"
+    },
+    {
+      "userName": "FlimsyFanatic",
+      "id": "bot-mqqm62ou",
+      "roomId": "room-movie-k20815z",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "userId": "bot-user-id",
+      "message": "Ubuntu orange layout looks so clean on this screen.",
+      "createdAt": "2026-06-23T12:21:46.398Z"
+    },
+    {
+      "userName": "Kari_Vortex",
+      "id": "bot-mqqm7jyo",
+      "roomId": "room-movie-k20815z",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "userId": "bot-user-id",
+      "message": "Buffering holds up nicely on my 4G, wow!",
+      "createdAt": "2026-06-23T12:22:55.440Z"
+    },
+    {
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "createdAt": "2026-06-23T12:23:54.529Z",
+      "message": "Downloading this for S6 exam break tomorrow.",
+      "userName": "Gera_Cinema",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqm8tk1"
+    },
+    {
+      "createdAt": "2026-06-23T12:24:18.396Z",
+      "message": "Ubuntu orange layout looks so clean on this screen.",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "userId": "bot-user-id",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqm9bz0",
+      "userName": "Gera_Cinema"
+    },
+    {
+      "message": "Downloading this for S6 exam break tomorrow.",
+      "createdAt": "2026-06-23T12:25:02.397Z",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "userId": "bot-user-id",
+      "id": "bot-mqqma9x9",
+      "roomId": "room-movie-k20815z",
+      "userName": "Gera_Cinema"
+    },
+    {
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqmapcr",
+      "userName": "UbuntuDev_99",
+      "createdAt": "2026-06-23T12:25:22.395Z",
+      "message": "Who else is accessing the past papers PDF in the other tab?",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev"
+    },
+    {
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "message": "Downloading this for S6 exam break tomorrow.",
+      "createdAt": "2026-06-23T12:26:14.395Z",
+      "userName": "Kari_Vortex",
+      "id": "bot-mqqmbth7",
+      "roomId": "room-movie-k20815z"
+    },
+    {
+      "id": "bot-mqqmc5tv",
+      "roomId": "room-movie-k20815z",
+      "userName": "FlimsyFanatic",
+      "message": "This player has super clean speed control.",
+      "createdAt": "2026-06-23T12:26:30.403Z",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "userId": "bot-user-id"
+    },
+    {
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "userId": "bot-user-id",
+      "createdAt": "2026-06-23T12:28:18.405Z",
+      "message": "That cinematography right here is incredible!",
+      "userName": "Gera_Cinema",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqmeh5x"
+    },
+    {
+      "createdAt": "2026-06-23T12:30:10.421Z",
+      "message": "Who else is accessing the past papers PDF in the other tab?",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqmgvlh",
+      "userName": "Gera_Cinema"
+    },
+    {
+      "message": "Ubuntu orange layout looks so clean on this screen.",
+      "createdAt": "2026-06-23T12:30:46.531Z",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev",
+      "id": "bot-mqqmhngj",
+      "roomId": "room-movie-k20815z",
+      "userName": "UbuntuDev_99"
+    },
+    {
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqmj3tv",
+      "userName": "Gera_Cinema",
+      "createdAt": "2026-06-23T12:31:54.403Z",
+      "message": "This player has super clean speed control.",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "userId": "bot-user-id"
+    },
+    {
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "createdAt": "2026-06-23T12:32:02.405Z",
+      "message": "Wait, Sintel is finally finding her dragon!",
+      "userName": "FlimsyFanatic",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqmja05"
+    },
+    {
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqmkqh0",
+      "userName": "FlimsyFanatic",
+      "createdAt": "2026-06-23T12:33:10.404Z",
+      "message": "Buffering holds up nicely on my 4G, wow!",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "userId": "bot-user-id"
+    },
+    {
+      "userName": "Gera_Cinema",
+      "id": "bot-mqqmmvns",
+      "roomId": "room-movie-k20815z",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera",
+      "userId": "bot-user-id",
+      "message": "That cinematography right here is incredible!",
+      "createdAt": "2026-06-23T12:34:50.440Z"
+    },
+    {
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "userId": "bot-user-id",
+      "message": "That cinematography right here is incredible!",
+      "createdAt": "2026-06-23T12:34:58.453Z",
+      "userName": "FlimsyFanatic",
+      "id": "bot-mqqmn1ud",
+      "roomId": "room-movie-k20815z"
+    },
+    {
+      "message": "Wait, Sintel is finally finding her dragon!",
+      "createdAt": "2026-06-23T12:36:18.483Z",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "userId": "bot-user-id",
+      "id": "bot-mqqmorlf",
+      "roomId": "room-movie-k20815z",
+      "userName": "FlimsyFanatic"
+    },
+    {
+      "userName": "UbuntuDev_99",
+      "id": "bot-mqqmpphw",
+      "roomId": "room-movie-k20815z",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev",
+      "userId": "bot-user-id",
+      "message": "Wait, Sintel is finally finding her dragon!",
+      "createdAt": "2026-06-23T12:37:02.420Z"
+    },
+    {
+      "userName": "Kari_Vortex",
+      "id": "bot-mqqmpvo0",
+      "roomId": "room-movie-k20815z",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "message": "Ubuntu orange layout looks so clean on this screen.",
+      "createdAt": "2026-06-23T12:37:10.416Z"
+    },
+    {
+      "createdAt": "2026-06-23T12:37:30.424Z",
+      "message": "Who else is accessing the past papers PDF in the other tab?",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "userId": "bot-user-id",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqmqb3s",
+      "userName": "FlimsyFanatic"
+    },
+    {
+      "createdAt": "2026-06-23T12:37:42.554Z",
+      "message": "This player has super clean speed control.",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "userId": "bot-user-id",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqmqkgq",
+      "userName": "Kari_Vortex"
+    },
+    {
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev",
+      "createdAt": "2026-06-23T12:39:42.247Z",
+      "message": "This player has super clean speed control.",
+      "userName": "UbuntuDev_99",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqmt4tj"
+    },
+    {
+      "id": "bot-mqqmt4v9",
+      "roomId": "room-movie-k20815z",
+      "userName": "Kari_Vortex",
+      "message": "That cinematography right here is incredible!",
+      "createdAt": "2026-06-23T12:39:42.309Z",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen"
+    },
+    {
+      "userName": "FlimsyFanatic",
+      "id": "bot-mqqmt4xt",
+      "roomId": "room-movie-k20815z",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "userId": "bot-user-id",
+      "message": "Buffering holds up nicely on my 4G, wow!",
+      "createdAt": "2026-06-23T12:39:42.401Z"
+    },
+    {
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "message": "Downloading this for S6 exam break tomorrow.",
+      "createdAt": "2026-06-23T12:39:58.425Z",
+      "userName": "FlimsyFanatic",
+      "id": "bot-mqqmthax",
+      "roomId": "room-movie-k20815z"
+    },
+    {
+      "userName": "FlimsyFanatic",
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqmullq",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "createdAt": "2026-06-23T12:40:50.654Z",
+      "message": "This player has super clean speed control."
+    },
+    {
+      "userName": "UbuntuDev_99",
+      "id": "bot-mqqmuok4",
+      "roomId": "room-movie-k20815z",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=ubuntudev",
+      "message": "Wait, Sintel is finally finding her dragon!",
+      "createdAt": "2026-06-23T12:40:54.484Z"
+    },
+    {
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=karen",
+      "message": "Who else is accessing the past papers PDF in the other tab?",
+      "createdAt": "2026-06-23T13:02:29.520Z",
+      "userName": "Kari_Vortex",
+      "id": "bot-mqqnmftc",
+      "roomId": "room-movie-k20815z"
+    },
+    {
+      "roomId": "room-movie-k20815z",
+      "id": "bot-mqqo27hn",
+      "userName": "Gera_Cinema",
+      "createdAt": "2026-06-23T13:14:45.227Z",
+      "message": "Who else is accessing the past papers PDF in the other tab?",
+      "userId": "bot-user-id",
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=gera"
+    },
+    {
+      "userAvatar": "https://api.dicebear.com/7.x/pixel-art/svg?seed=fanatic",
+      "userId": "bot-user-id",
+      "message": "Downloading this for S6 exam break tomorrow.",
+      "createdAt": "2026-06-24T04:33:28.804Z",
+      "userName": "FlimsyFanatic",
+      "id": "bot-mqrkvp44",
+      "roomId": "room-movie-k20815z"
+    }
+  ],
+  "documents": [],
+  "downloads": [
+    {
+      "userId": "admin-id-123",
+      "createdAt": "2026-06-23T10:22:23.223Z",
+      "itemType": "movie",
+      "itemId": "movie-bsxro6r",
+      "id": "down-lmwrk7t"
+    },
+    {
+      "itemId": "movie-bsxro6r",
+      "itemType": "movie",
+      "id": "down-cladw1t",
+      "userId": "admin-id-123",
+      "createdAt": "2026-06-23T10:22:32.299Z"
+    },
+    {
+      "id": "down-7ep77rz",
+      "userId": "admin-id-123",
+      "itemId": "ubuntu-apk",
+      "itemType": "apk",
+      "createdAt": "2026-06-24T16:04:52.650Z"
+    },
+    {
+      "id": "down-lqprnpo",
+      "userId": "admin-id-123",
+      "itemId": "ubuntu-apk",
+      "itemType": "apk",
+      "createdAt": "2026-06-24T16:04:52.849Z"
+    },
+    {
+      "id": "down-nqcqu7b",
+      "userId": "admin-id-123",
+      "itemId": "ubuntu-apk",
+      "itemType": "apk",
+      "createdAt": "2026-06-24T16:04:55.776Z"
+    }
+  ],
+  "settings": {
+    "heroBannerSubtitle": "The Ultimate Community Media Platform for African Education and Entertainment Collaboration.",
+    "contactPhone": "0791728473",
+    "footerText": "© 2026 Ubuntu Flimsy. Stream and learn freely under standard Ubuntu spirit.",
+    "heroBannerTitle": "Free Unlimited HD Movies & Learning Resources",
+    "contactEmail": "gisubizojules8@gmail.com",
+    "logoName": "Ubuntu Flimsy",
+    "enableDonations": false
+  },
+  "supportMessages": [
+    {
+      "repliedAt": "2026-06-23T11:17:47.368Z",
+      "id": "msg-3wlw5cg",
+      "email": "gisubizojules8@gmail.com",
+      "message": "Hu",
+      "name": "Jules GISUBIZO",
+      "isRead": true,
+      "reply": "Hiii",
+      "phone": "0791728473",
+      "createdAt": "2026-06-23T11:16:36.643Z"
+    },
+    {
+      "name": "Gisubizo Jules",
+      "id": "msg-qa104aq",
+      "isRead": false,
+      "email": "gisubizojules8@gmail.com",
+      "phone": "0791728473",
+      "createdAt": "2026-06-23T11:18:13.586Z",
+      "message": "Hhh"
+    }
+  ],
+  "donations": [
+    {
+      "donorPhone": "0791728473",
+      "transactionReference": "66eee68e-3146-41a4-b689-b06a83ee3d9f",
+      "createdAt": "2026-06-23T11:45:36.068Z",
+      "amount": 1000,
+      "donorName": "Jibu",
+      "status": "successful",
+      "id": "66eee68e-3146-41a4-b689-b06a83ee3d9f"
+    },
+    {
+      "transactionReference": "feffc14f-de52-469c-8e09-4196e5438687",
+      "donorPhone": "0791728473",
+      "createdAt": "2026-06-23T13:02:58.102Z",
+      "amount": 50000,
+      "status": "successful",
+      "id": "feffc14f-de52-469c-8e09-4196e5438687",
+      "donorName": "Jibu"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif-ipjkfas",
+      "title": "Catalogs Synchronized! 🎬",
+      "body": "1 new shows/movies added to the directory.",
+      "isReadBy": [
+        "admin-id-123"
+      ],
+      "createdAt": "2026-06-24T15:58:04.114Z"
+    },
+    {
+      "id": "notif-47q4nf4",
+      "title": "Catalogs Synchronized! 🎬",
+      "body": "1 new shows/movies added to the directory.",
+      "isReadBy": [
+        "admin-id-123"
+      ],
+      "createdAt": "2026-06-24T16:05:37.299Z"
+    }
+  ]
+}

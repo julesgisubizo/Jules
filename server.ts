@@ -10,6 +10,11 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { createServer as createViteServer } from 'vite';
 import { User, Movie, Comment, ChatRoom, ChatMessage, Document, UserRole, WatchSourceType, SiteSettings, DownloadTracking } from './src/types';
+import { initializeApp } from 'firebase/app';
+import { initializeFirestore, doc, getDoc, setDoc, setLogLevel, terminate } from 'firebase/firestore';
+import { getAuth, signInAnonymously } from 'firebase/auth';
+import { createMomoPayment, checkMomoPaymentStatus } from './momo';
+
 
 // Setup storage directories
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -23,14 +28,37 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
+// Initialize Firebase App and Firestore Database if configuration is present
+let firebaseApp: any = null;
+let firestoreDb: any = null;
+
+try {
+  const firebaseConfigPath = path.join(process.cwd(), 'firebase-applet-config.json');
+  if (fs.existsSync(firebaseConfigPath)) {
+    const config = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf-8'));
+    firebaseApp = initializeApp(config);
+    // Use custom Firestore Database ID specified in the provisioned config (critical for AI Studio custom databases!)
+    firestoreDb = initializeFirestore(firebaseApp, {}, config.firestoreDatabaseId || '(default)');
+    try {
+      setLogLevel('silent');
+    } catch (logErr) {}
+    console.log("🔥 Persistent Firebase Firestore initialized successfully with DB ID:", config.firestoreDatabaseId);
+  } else {
+    console.warn("⚠️ Firebase configuration file not found, running with local file persistence only.");
+  }
+} catch (e) {
+  console.error("❌ Failed to initialize Firebase:", e);
+}
+
 // Default Seed Data
 const DEFAULT_SETTINGS: SiteSettings = {
   logoName: "Ubuntu Flimsy",
-  contactEmail: "info@ubuntuflimsy.com",
-  contactPhone: "+250 788 123 456",
+  contactEmail: "gisubizojules8@gmail.com",
+  contactPhone: "0791728473",
   footerText: "© 2026 Ubuntu Flimsy. Stream and learn freely under standard Ubuntu spirit.",
   heroBannerTitle: "Free Unlimited HD Movies & Learning Resources",
-  heroBannerSubtitle: "The Ultimate Community Media Platform for African Education and Entertainment Collaboration."
+  heroBannerSubtitle: "The Ultimate Community Media Platform for African Education and Entertainment Collaboration.",
+  enableDonations: false
 };
 
 const DEFAULT_USERS: User[] = [
@@ -50,226 +78,19 @@ const DEFAULT_USERS: User[] = [
     role: "user",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
     createdAt: new Date().toISOString(),
-    watchlist: ["movie-sintel"]
+    watchlist: []
   }
 ];
 
-const DEFAULT_MOVIES: Movie[] = [
-  {
-    id: "movie-sintel",
-    title: "Sintel",
-    slug: "sintel",
-    description: "Sintel is an independently produced computer animated film by the Blender Foundation. It tells the story of a girl named Sintel who rescues and forms a deep bond with a baby dragon.",
-    watch_source_type: WatchSourceType.LINK,
-    watch_link: "https://media.w3.org/2010/05/sintel/trailer_hd.mp4",
-    download_link: "https://media.w3.org/2010/05/sintel/trailer_hd.mp4",
-    poster_image: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&auto=format&fit=crop&q=80",
-    cover_image: "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=1200&auto=format&fit=crop&q=80",
-    trailer_link: "https://www.youtube.com/watch?v=eRsGy_LQJlY",
-    genre: ["Animation", "Adventure", "Drama"],
-    year: 2022,
-    duration: "14m",
-    language: "English",
-    country: "Netherlands",
-    quality: "Full HD",
-    tags: ["sintel", "blender", "dragon", "animated"],
-    views: 1240,
-    likes: 85,
-    commentsCount: 2,
-    createdAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-    isFeatured: true
-  },
-  {
-    id: "movie-tears",
-    title: "Tears of Steel",
-    slug: "tears-of-steel",
-    description: "Set in a sci-fi fantasy future in Amsterdam, a group of scientists try to save the world from destructive giant robots using advanced holographic simulations and cyber technology.",
-    watch_source_type: WatchSourceType.LINK,
-    watch_link: "https://vjs.zencdn.net/v/oceans.mp4",
-    download_link: "https://vjs.zencdn.net/v/oceans.mp4",
-    poster_image: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&auto=format&fit=crop&q=80",
-    cover_image: "https://images.unsplash.com/photo-1535016120720-40c646be5580?w=1200&auto=format&fit=crop&q=80",
-    trailer_link: "https://www.youtube.com/watch?v=R6MlUcmgny8",
-    genre: ["Sci-Fi", "Action", "Thriller"],
-    year: 2023,
-    duration: "12m",
-    language: "English",
-    country: "Netherlands",
-    quality: "4K",
-    tags: ["cyberpunk", "robots", "future", "vfx"],
-    views: 6512,
-    likes: 412,
-    commentsCount: 3,
-    createdAt: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-    isFeatured: true
-  },
-  {
-    id: "movie-bunny",
-    title: "Big Buck Bunny",
-    slug: "big-buck-bunny",
-    description: "A large, lovable rabbit awakens and is tormented by three annoying rodents. He decides to teach them a hilarious, action-packed lesson using creative forest traps.",
-    watch_source_type: WatchSourceType.LINK,
-    watch_link: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-    download_link: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-    poster_image: "https://images.unsplash.com/photo-1509281373149-e957c6296406?w=400&auto=format&fit=crop&q=80",
-    cover_image: "https://images.unsplash.com/photo-1501183007986-d0d080b147f9?w=1200&auto=format&fit=crop&q=80",
-    trailer_link: "https://www.youtube.com/watch?v=VPG7K_zV8Zg",
-    genre: ["Comedy", "Animation", "Family"],
-    year: 2021,
-    duration: "10m",
-    language: "English",
-    country: "United States",
-    quality: "Full HD",
-    tags: ["bunny", "funny", "cartoon", "comedy"],
-    views: 9283,
-    likes: 541,
-    commentsCount: 1,
-    createdAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "movie-dreams",
-    title: "Elephant's Dream",
-    slug: "elephants-dream",
-    description: "A surreal, dramatic journey of two men exploring a giant master machine with unexpected, mind-bending mechanical worlds and testing the limits of psychological sanity.",
-    watch_source_type: WatchSourceType.LINK,
-    watch_link: "https://html5demos.com/assets/dizzy.mp4",
-    download_link: "https://html5demos.com/assets/dizzy.mp4",
-    poster_image: "https://images.unsplash.com/photo-1478720143022-90574343d6c3?w=400&auto=format&fit=crop&q=80",
-    cover_image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200&auto=format&fit=crop&q=80",
-    trailer_link: "https://www.youtube.com/watch?v=TLKA0jekYNo",
-    genre: ["Drama", "Animation", "Sci-Fi"],
-    year: 2020,
-    duration: "11m",
-    language: "English",
-    country: "Rwanda",
-    quality: "HD",
-    tags: ["surreal", "steampunk", "mechanical", "drama"],
-    views: 421,
-    likes: 35,
-    commentsCount: 0,
-    createdAt: new Date(Date.now() - 12 * 24 * 3600 * 1000).toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-];
-
-const DEFAULT_DOCUMENTS: Document[] = [
-  {
-    id: "doc-1",
-    title: "Mathematics National Examination Past Paper",
-    description: "Detailed Rwanda Education Board exam revision past paper with master solutions, questions, and revision guide for high school students in Advanced Level.",
-    download_link: "https://contents.meetup.com/sample.pdf",
-    thumbnail: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&auto=format&fit=crop&q=80",
-    subject: "Mathematics",
-    class_level: "Senior 6 (S6)",
-    year: 2025,
-    document_type: "Past Paper",
-    createdAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString()
-  },
-  {
-    id: "doc-2",
-    title: "Introductory Python Programming & Logic Notes",
-    description: "Comprehensive study booklet on data structures, algorithmic puzzles, conditionals, loops, and functional computer science concepts.",
-    download_link: "https://contents.meetup.com/sample.pdf",
-    thumbnail: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=400&auto=format&fit=crop&q=80",
-    subject: "Computer Science",
-    class_level: "Senior 5 (S5)",
-    year: 2026,
-    document_type: "Notes",
-    createdAt: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString()
-  },
-  {
-    id: "doc-3",
-    title: "Physics Mechanics Principles Handout",
-    description: "Official academic textbook dealing with Newton's laws of motion, gravitation, energy, work, power, and rotary systems.",
-    download_link: "https://contents.meetup.com/sample.pdf",
-    thumbnail: "https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=400&auto=format&fit=crop&q=80",
-    subject: "Physics",
-    class_level: "Senior 4 (S4)",
-    year: 2024,
-    document_type: "Book",
-    createdAt: new Date(Date.now() - 15 * 24 * 3600 * 1000).toISOString()
-  }
-];
-
-const DEFAULT_COMMENTS: Comment[] = [
-  {
-    id: "comm-1",
-    userId: "user-id-456",
-    userName: "John Doe",
-    userAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-    movieId: "movie-sintel",
-    content: "Absolutely spectacular animation details! The bond they portray in only 14 minutes is outstanding.",
-    createdAt: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString()
-  },
-  {
-    id: "comm-2",
-    userId: "admin-id-123",
-    userName: "Ubuntu Admin",
-    userAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-    movieId: "movie-sintel",
-    content: "We host this Sintel movie specifically to showcase blender's strength. Stay tuned for more African & International cinema releases soon!",
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "comm-3",
-    userId: "user-id-456",
-    userName: "John Doe",
-    userAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-    movieId: "movie-tears",
-    content: "This Netherlands VFX project is top tier! Incredible cyber robots on a budget.",
-    createdAt: new Date().toISOString()
-  }
-];
-
-const DEFAULT_CHAT_ROOMS: ChatRoom[] = [
-  {
-    id: "room-sintel",
-    movieId: "movie-sintel",
-    roomName: "Sintel Watch Party",
-    isActive: true,
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "room-tears",
-    movieId: "movie-tears",
-    roomName: "Tears of Steel Live Scene Chat",
-    isActive: true,
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: "room-bunny",
-    movieId: "movie-bunny",
-    roomName: "Big Buck Bunny Cinema Hub",
-    isActive: true,
-    createdAt: new Date().toISOString()
-  }
-];
-
-const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
-  {
-    id: "msg-1",
-    roomId: "room-sintel",
-    userId: "user-id-456",
-    userName: "John Doe",
-    userAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-    message: "Does anyone understand the scene at 5:00 minutes where Sintel walks through the blizzard?",
-    createdAt: new Date(Date.now() - 600 * 1000).toISOString()
-  },
-  {
-    id: "msg-2",
-    roomId: "room-sintel",
-    userId: "admin-id-123",
-    userName: "Ubuntu Admin",
-    userAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-    message: "Yes! She is looking for the nesting spot of the dragons where the baby might have been taken.",
-    createdAt: new Date(Date.now() - 300 * 1000).toISOString()
-  }
-];
+const DEFAULT_MOVIES: Movie[] = [];
+const DEFAULT_DOCUMENTS: Document[] = [];
+const DEFAULT_COMMENTS: Comment[] = [];
+const DEFAULT_CHAT_ROOMS: ChatRoom[] = [];
+const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [];
 
 // Helper to Load/Save to JSON file Database
+let cachedDb: any = null;
+
 function readDatabase() {
   const getHashedDb = (db: any) => {
     let updated = false;
@@ -293,22 +114,36 @@ function readDatabase() {
       chatMessages: DEFAULT_CHAT_MESSAGES,
       documents: DEFAULT_DOCUMENTS,
       downloads: [],
-      settings: DEFAULT_SETTINGS
+      settings: DEFAULT_SETTINGS,
+      supportMessages: [],
+      donations: []
     };
     const { db: hashedDb } = getHashedDb(initialDb);
     fs.writeFileSync(DB_FILE, JSON.stringify(hashedDb, null, 2));
+    cachedDb = hashedDb;
     return hashedDb;
   }
   try {
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
     const db = JSON.parse(raw);
+    if (!db.supportMessages) {
+      db.supportMessages = [];
+    }
+    if (!db.donations) {
+      db.donations = [];
+    }
     const { db: hashedDb, updated } = getHashedDb(db);
-    if (updated) {
+    if (updated || !db.donations) {
       fs.writeFileSync(DB_FILE, JSON.stringify(hashedDb, null, 2));
     }
+    cachedDb = hashedDb;
     return hashedDb;
   } catch (err) {
     console.error("Database read error, restoring defaults.", err);
+    if (cachedDb) {
+      console.log("Using cachedDb to prevent resetting data due to transient concurrent read failures.");
+      return cachedDb;
+    }
     const initialDb = {
       users: DEFAULT_USERS,
       movies: DEFAULT_MOVIES,
@@ -317,16 +152,152 @@ function readDatabase() {
       chatMessages: DEFAULT_CHAT_MESSAGES,
       documents: DEFAULT_DOCUMENTS,
       downloads: [],
-      settings: DEFAULT_SETTINGS
+      settings: DEFAULT_SETTINGS,
+      supportMessages: [],
+      donations: []
     };
     const { db: hashedDb } = getHashedDb(initialDb);
+    cachedDb = hashedDb;
     return hashedDb;
+  }
+}
+
+let isFirestoreQuotaExceeded = false;
+
+async function handleFirestoreExhaustion(err: any, contextMsg: string) {
+  if (isFirestoreQuotaExceeded) return;
+  const errMsg = String(err?.message || err || '').toUpperCase();
+  const errCode = String(err?.code || '').toUpperCase();
+  const isQuota = errMsg.includes('RESOURCE_EXHAUSTED') || 
+                  errMsg.includes('QUOTA') || 
+                  errMsg.includes('EXHAUSTED') || 
+                  errCode.includes('RESOURCE-EXHAUSTED') ||
+                  errCode.includes('RESOURCE_EXHAUSTED');
+
+  if (isQuota) {
+    isFirestoreQuotaExceeded = true;
+    console.warn(`⚠️ Firebase Firestore write/read quota exceeded (${contextMsg})! Disabling and terminating Firestore connections. Falling back to local database file.`);
+    if (firestoreDb) {
+      try {
+        const dbToTerminate = firestoreDb;
+        firestoreDb = null;
+        await terminate(dbToTerminate);
+      } catch (tErr) {
+        console.warn("⚠️ Failed to terminate Firestore instance cleanly:", tErr);
+      }
+    }
+  } else {
+    console.error(`❌ Firestore error during ${contextMsg}:`, err);
+  }
+}
+
+async function saveDatabaseToFirestore(data: any) {
+  if (!firestoreDb || isFirestoreQuotaExceeded) return;
+  try {
+    const keys = ['users', 'movies', 'comments', 'chatRooms', 'chatMessages', 'documents', 'downloads', 'settings', 'supportMessages', 'donations'];
+    for (const key of keys) {
+      if (data[key] !== undefined) {
+        const docRef = doc(firestoreDb, 'ubuntu_flimsy_data', key);
+        await setDoc(docRef, { list: data[key] });
+      }
+    }
+    console.log("☁️ Successfully backed up database lists to persistent Cloud Firestore!");
+  } catch (err: any) {
+    await handleFirestoreExhaustion(err, 'database sync write');
+  }
+}
+
+async function loadDatabaseFromFirestore() {
+  if (!firestoreDb || isFirestoreQuotaExceeded) return;
+  try {
+    console.log("☁️ Syncing database from persistent Cloud Firestore...");
+    const keys = ['users', 'movies', 'comments', 'chatRooms', 'chatMessages', 'documents', 'downloads', 'settings', 'supportMessages', 'donations'];
+
+    const db: any = {};
+    let foundAny = false;
+
+    for (const key of keys) {
+      const docRef = doc(firestoreDb, 'ubuntu_flimsy_data', key);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const docData = docSnap.data();
+        db[key] = docData.list || [];
+        foundAny = true;
+      }
+    }
+
+    if (foundAny) {
+      const existingDb = readDatabase(); // gets local file or defaults
+      const mergedDb = { ...existingDb };
+
+      // Robust merging function for arrays of objects that have unique IDs
+      const mergeArraysById = (localArr: any[], remoteArr: any[]) => {
+        const local = Array.isArray(localArr) ? localArr : [];
+        const remote = Array.isArray(remoteArr) ? remoteArr : [];
+        const map = new Map();
+
+        // Feed local database items first
+        local.forEach(item => {
+          if (item && item.id) {
+            map.set(String(item.id), item);
+          }
+        });
+
+        // Overlay remote items cleanly, keeping the newest updatedAt where matching IDs exist
+        remote.forEach(item => {
+          if (item && item.id) {
+            const itemIdStr = String(item.id);
+            const existing = map.get(itemIdStr);
+            if (existing) {
+              const localUpdate = existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
+              const remoteUpdate = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
+              if (remoteUpdate >= localUpdate) {
+                map.set(itemIdStr, { ...existing, ...item });
+              }
+            } else {
+              map.set(itemIdStr, item);
+            }
+          }
+        });
+
+        return Array.from(map.values());
+      };
+
+      const collections = ['users', 'movies', 'comments', 'chatRooms', 'chatMessages', 'documents', 'downloads', 'supportMessages', 'donations'];
+
+      for (const key of collections) {
+        if (db[key] !== undefined) {
+          mergedDb[key] = mergeArraysById(existingDb[key], db[key]);
+        }
+      }
+
+      if (db.settings) {
+        mergedDb.settings = { ...existingDb.settings, ...db.settings };
+      }
+      
+      // Save locally for quick synchronous file lookups
+      fs.writeFileSync(DB_FILE, JSON.stringify(mergedDb, null, 2));
+      cachedDb = mergedDb;
+      console.log("👉 Successfully merged and restored database lists from Cloud Firestore!");
+    } else {
+      console.log("👉 No previous database found in Cloud Firestore. Initializing first Firestore sync...");
+      const currentDb = readDatabase();
+      await saveDatabaseToFirestore(currentDb);
+    }
+  } catch (err: any) {
+    await handleFirestoreExhaustion(err, 'database retrieval on startup');
   }
 }
 
 function writeDatabase(data: any) {
   try {
+    cachedDb = data;
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+    if (firestoreDb && !isFirestoreQuotaExceeded) {
+      saveDatabaseToFirestore(data).catch((err) => {
+        handleFirestoreExhaustion(err, 'background database sync').catch(() => {});
+      });
+    }
   } catch (err) {
     console.error("Database write error.", err);
   }
@@ -344,6 +315,26 @@ async function startServer() {
 
   // Initialize DB once on boot
   readDatabase();
+
+  // Load from persistent Firestore database on startup to hydrate default file database in the background (non-blocking)
+  if (firestoreDb) {
+    (async () => {
+      try {
+        const auth = getAuth(firebaseApp);
+        console.log("🔐 Authenticating backend server session with dynamic Firestore...");
+        const userCred = await signInAnonymously(auth);
+        console.log("👉 Server authenticated successfully with anonymous Firebase credential token (UID:", userCred.user?.uid, ")");
+      } catch (authErr) {
+        console.log("👉 Firebase Auth server session info: using fallback rules (not signed in anonymously).");
+      }
+
+      try {
+        await loadDatabaseFromFirestore();
+      } catch (err) {
+        console.error("❌ Failed to load Cloud Firestore database on boot:", err);
+      }
+    })();
+  }
 
   const JWT_SECRET = process.env.JWT_SECRET || 'ubuntu_flimsy_sec_2026_key';
 
@@ -422,9 +413,9 @@ async function startServer() {
       "name": "Ubuntu Flimsy HD Media & Textbook Central",
       "icons": [
         {
-          "src": "https://api.dicebear.com/7.x/identicon/svg?seed=UbuntuFlimsy",
-          "type": "image/svg+xml",
-          "sizes": "192x192 512x512",
+          "src": "/favicon.png",
+          "type": "image/jpeg",
+          "sizes": "512x512",
           "purpose": "any maskable"
         }
       ],
@@ -439,55 +430,137 @@ async function startServer() {
   app.get('/sw.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
     res.send(`
-const CACHE_NAME = 'ubuntu-flimsy-cache-v2';
-const urlsToCache = [
-  '/',
-  '/index.html'
-];
-
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(urlsToCache).catch(() => {});
-    })
-  );
+// Self-destructing service worker to force clear older caches
+self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cache => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', event => {
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/');
-      })
-    );
-  } else {
-    event.respondWith(
-      caches.match(event.request).then(response => {
-        return response || fetch(event.request);
-      }).catch(() => {})
-    );
-  }
+self.addEventListener('activate', (e) => {
+  caches.keys().then((keys) => {
+    return Promise.all(keys.map((key) => caches.delete(key)));
+  }).then(() => {
+    return self.registration.unregister();
+  }).then(() => {
+    return self.clients.matchAll();
+  }).then((clients) => {
+    clients.forEach((client) => {
+      client.navigate(client.url);
+    });
+  });
 });
     `);
   });
 
   // --- API ROUTES ---
+
+  // MTN MoMo Donation System API Routes
+  app.post('/api/donate', async (req, res) => {
+    try {
+      const { donorName, donorPhone, amount } = req.body;
+
+      // Input Validations
+      if (!donorPhone) {
+        return res.status(400).json({ error: "MTN Phone number is required." });
+      }
+      if (!amount || isNaN(amount) || Number(amount) <= 0) {
+        return res.status(400).json({ error: "A valid donation amount greater than 0 is required." });
+      }
+
+      console.log(`💸 Processing MoMo Donation request for amount ${amount} from ${donorPhone}`);
+      
+      // Dispatch MoMo payment prompt
+      const result = await createMomoPayment(donorPhone, Number(amount), donorName);
+      
+      const db = readDatabase();
+      if (!db.donations) {
+        db.donations = [];
+      }
+
+      // Record the pending transaction
+      const newDonation = {
+        id: result.referenceId,
+        donorName: donorName ? donorName.trim() : 'Anonymous Donor',
+        donorPhone: donorPhone.trim(),
+        amount: Number(amount),
+        transactionReference: result.referenceId,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+
+      db.donations.push(newDonation);
+      writeDatabase(db);
+
+      res.status(200).json({
+        success: true,
+        referenceId: result.referenceId,
+        isMock: result.isMock,
+        message: result.message
+      });
+
+    } catch (err: any) {
+      console.error("❌ Error initiating MoMo donation checkout:", err);
+      res.status(500).json({ error: err.message || "Failed to trigger MTN Mobile Money checkout." });
+    }
+  });
+
+  // Query and poll MTN MoMo payment status
+  app.get('/api/donate/status/:refId', async (req, res) => {
+    try {
+      const { refId } = req.params;
+      if (!refId) {
+        return res.status(400).json({ error: "Missing transaction reference ID." });
+      }
+
+      const result = await checkMomoPaymentStatus(refId);
+      
+      const db = readDatabase();
+      if (!db.donations) {
+        db.donations = [];
+      }
+
+      const donationIdx = db.donations.findIndex((d: any) => d.id === refId);
+      if (donationIdx !== -1) {
+        const donation = db.donations[donationIdx];
+        
+        // Only update if current recorded status is pending to avoid overriding final outcomes
+        if (donation.status === 'pending' || donation.status === 'PENDING') {
+          if (result.status === 'SUCCESSFUL') {
+            db.donations[donationIdx].status = 'successful';
+            writeDatabase(db);
+            console.log(`💚 Donation transaction ${refId} verified successfully!`);
+          } else if (result.status === 'FAILED') {
+            db.donations[donationIdx].status = 'failed';
+            writeDatabase(db);
+            console.log(`💔 Donation transaction ${refId} marks as failed or rejected.`);
+          }
+        }
+      }
+
+      res.status(200).json({
+        success: true,
+        status: result.status,
+        details: result.details
+      });
+
+    } catch (err: any) {
+      console.error(`❌ Error verifying MoMo donation status for ${req.params.refId}:`, err);
+      res.status(500).json({ error: "Failed to poll transaction status." });
+    }
+  });
+
+  // Public/Admin Fetch list of all successful & total donation records
+  app.get('/api/donations', (req, res) => {
+    try {
+      const db = readDatabase();
+      const list = db.donations || [];
+      // Sort with newest on top
+      const sorted = [...list].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      res.status(200).json(sorted);
+    } catch (err) {
+      console.error("❌ Failed retrieving donations lists:", err);
+      res.status(500).json([]);
+    }
+  });
 
   // Auth Status check - /api/auth/me
   app.get('/api/auth/me', (req: any, res) => {
@@ -661,6 +734,89 @@ self.addEventListener('fetch', event => {
     res.json(db.settings || DEFAULT_SETTINGS);
   });
 
+  app.post('/api/support/message', (req, res) => {
+    const { name, email, phone, message } = req.body;
+    if (!name || !email || !message) {
+      return res.status(400).json({ error: "Missing required contact details" });
+    }
+
+    const db = readDatabase();
+    if (!db.supportMessages) {
+      db.supportMessages = [];
+    }
+    const newMessage = {
+      id: "msg-" + Math.random().toString(36).substring(2, 9),
+      name,
+      email,
+      phone: phone || '',
+      message,
+      createdAt: new Date().toISOString(),
+      isRead: false
+    };
+    db.supportMessages.push(newMessage);
+    writeDatabase(db);
+
+    console.log(`[SMS ROUTING SYSTEM] Forwarding SMS/Message alerts to Admin Email gisubizojules8@gmail.com`);
+    console.log(`- From Sender: ${name}`);
+    console.log(`- Telephone (SMS): ${phone || 'N/A'}`);
+    console.log(`- Email Address: ${email}`);
+    console.log(`- Message Content: "${message}"`);
+    console.log(`[SMS ROUTING SYSTEM] Dispatched email alert successfully to: gisubizojules8@gmail.com`);
+
+    res.json({ success: true, log: "SMS email alert sent to gisubizojules8@gmail.com", message: newMessage });
+  });
+
+  app.get('/api/admin/messages', requireAdmin, (req, res) => {
+    const db = readDatabase();
+    res.json(db.supportMessages || []);
+  });
+
+  app.post('/api/admin/messages/:id/read', requireAdmin, (req, res) => {
+    const db = readDatabase();
+    if (!db.supportMessages) db.supportMessages = [];
+    const msgIdx = db.supportMessages.findIndex((m: any) => m.id === req.params.id);
+    if (msgIdx !== -1) {
+      db.supportMessages[msgIdx].isRead = req.body.isRead !== undefined ? req.body.isRead : true;
+      writeDatabase(db);
+      return res.json({ success: true, message: db.supportMessages[msgIdx] });
+    }
+    res.status(404).json({ error: "Message not found" });
+  });
+
+  app.delete('/api/admin/messages/:id', requireAdmin, (req, res) => {
+    const db = readDatabase();
+    if (!db.supportMessages) db.supportMessages = [];
+    db.supportMessages = db.supportMessages.filter((m: any) => m.id !== req.params.id);
+    writeDatabase(db);
+    res.json({ success: true });
+  });
+
+  app.post('/api/admin/messages/:id/reply', requireAdmin, (req, res) => {
+    const { reply } = req.body;
+    const db = readDatabase();
+    if (!db.supportMessages) db.supportMessages = [];
+    const msgIdx = db.supportMessages.findIndex((m: any) => m.id === req.params.id);
+    if (msgIdx !== -1) {
+      db.supportMessages[msgIdx].reply = reply || '';
+      db.supportMessages[msgIdx].repliedAt = reply ? new Date().toISOString() : undefined;
+      writeDatabase(db);
+      return res.json({ success: true, message: db.supportMessages[msgIdx] });
+    }
+    res.status(404).json({ error: "Message not found" });
+  });
+
+  app.get('/api/support/messages', (req, res) => {
+    const email = req.query.email as string;
+    if (!email) {
+      return res.json([]);
+    }
+    const db = readDatabase();
+    const messages = (db.supportMessages || []).filter(
+      (m: any) => m.email && m.email.toLowerCase() === email.toLowerCase()
+    );
+    res.json(messages);
+  });
+
   app.post('/api/settings', requireAdmin, (req, res) => {
     const updated = req.body;
     const db = readDatabase();
@@ -683,6 +839,101 @@ self.addEventListener('fetch', event => {
   });
 
   // Movie CRUD (Admin only)
+  app.post('/api/movies/bulk', requireAdmin, (req, res) => {
+    const moviesData = req.body.movies;
+    if (!moviesData || !Array.isArray(moviesData)) {
+      return res.status(400).json({ error: "Invalid movies array payload" });
+    }
+
+    const db = readDatabase();
+    const importedMovies: any[] = [];
+
+    for (const movieData of moviesData) {
+      if (!movieData.title) continue;
+
+      const titleStr = String(movieData.title).trim();
+      const slug = titleStr.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      const id = movieData.id || "movie-" + Math.random().toString(36).substring(2, 9);
+
+      // Parse genres
+      let genreList: string[] = ["Action"];
+      if (typeof movieData.genre === 'string') {
+        genreList = movieData.genre.split(',').map((g: string) => g.trim()).filter(Boolean);
+      } else if (Array.isArray(movieData.genre)) {
+        genreList = movieData.genre.map((g: any) => String(g).trim()).filter(Boolean);
+      }
+      if (genreList.length === 0) {
+        genreList = ["Action"];
+      }
+
+      // Parse tags
+      let tagList: string[] = [];
+      if (typeof movieData.tags === 'string') {
+        tagList = movieData.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+      } else if (Array.isArray(movieData.tags)) {
+        tagList = movieData.tags.map((t: any) => String(t).trim()).filter(Boolean);
+      }
+
+      const newMovie: any = {
+        id,
+        title: titleStr,
+        slug: slug || id,
+        description: movieData.description ? String(movieData.description).trim() : "No description provided.",
+        watch_source_type: movieData.watch_source_type ? String(movieData.watch_source_type).trim() : "Link",
+        uploaded_video_path: movieData.uploaded_video_path ? String(movieData.uploaded_video_path).trim() : "",
+        watch_link: movieData.watch_link ? String(movieData.watch_link).trim() : "",
+        download_link: movieData.download_link ? String(movieData.download_link).trim() : "",
+        poster_image: movieData.poster_image ? String(movieData.poster_image).trim() : "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400",
+        cover_image: movieData.cover_image ? String(movieData.cover_image).trim() : "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1200",
+        trailer_link: movieData.trailer_link ? String(movieData.trailer_link).trim() : "",
+        genre: genreList,
+        year: Number(movieData.year) || new Date().getFullYear(),
+        duration: movieData.duration ? String(movieData.duration).trim() : "120m",
+        language: movieData.language ? String(movieData.language).trim() : "English",
+        country: movieData.country ? String(movieData.country).trim() : "Rwanda",
+        quality: movieData.quality ? String(movieData.quality).trim() : "HD",
+        tags: tagList,
+        views: Number(movieData.views) || 0,
+        likes: Number(movieData.likes) || 0,
+        commentsCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isFeatured: typeof movieData.isFeatured === 'boolean' ? movieData.isFeatured : (String(movieData.isFeatured).toLowerCase() === 'true'),
+        seasons: Array.isArray(movieData.seasons) ? movieData.seasons : []
+      };
+
+      db.movies.push(newMovie);
+      importedMovies.push(newMovie);
+
+      // Auto create a chat room for it
+      const newRoom: any = {
+        id: `room-${id}`,
+        movieId: id,
+        roomName: `${newMovie.title} Discussion`,
+        isActive: true,
+        createdAt: new Date().toISOString()
+      };
+      db.chatRooms.push(newRoom);
+    }
+
+    if (importedMovies.length > 0) {
+      if (!db.notifications) {
+        db.notifications = [];
+      }
+      db.notifications.push({
+        id: "notif-" + Math.random().toString(36).substring(2, 9),
+        title: "Catalogs Synchronized! 🎬",
+        body: `${importedMovies.length} new shows/movies added to the directory.`,
+        isReadBy: [],
+        createdAt: new Date().toISOString()
+      });
+
+      writeDatabase(db);
+    }
+
+    res.json({ success: true, count: importedMovies.length, movies: importedMovies });
+  });
+
   app.post('/api/movies', requireAdmin, (req, res) => {
     const movieData: Partial<Movie> = req.body;
     if (!movieData.title) return res.status(400).json({ error: "Movie Title is required" });
@@ -739,6 +990,70 @@ self.addEventListener('fetch', event => {
       movieId: id,
       title: "New Film Added! 🎬",
       body: `"${newMovie.title}" has been freshly added to Ubuntu Flimsy! Click to watch now.`,
+      isReadBy: [],
+      createdAt: new Date().toISOString()
+    });
+
+    writeDatabase(db);
+    res.json({ success: true, movie: newMovie });
+  });
+
+  app.post('/api/movies/public', requireAuth, (req, res) => {
+    const movieData: any = req.body;
+    if (!movieData.title) return res.status(400).json({ error: "Movie Title is required" });
+
+    const db = readDatabase();
+    const slug = movieData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    const id = "movie-" + Math.random().toString(36).substring(2, 9);
+
+    const newMovie: any = {
+      id,
+      title: movieData.title,
+      slug: slug || id,
+      description: movieData.description || "Uploaded directly from a community member's device.",
+      watch_source_type: "upload",
+      uploaded_video_path: movieData.uploaded_video_path || "",
+      watch_link: movieData.watch_link || "",
+      download_link: movieData.download_link || "",
+      poster_image: movieData.poster_image || "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400",
+      cover_image: movieData.cover_image || "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1200",
+      trailer_link: movieData.trailer_link || "",
+      genre: movieData.genre || ["Community"],
+      year: Number(movieData.year) || new Date().getFullYear(),
+      duration: movieData.duration || "Community Stream",
+      language: movieData.language || "English",
+      country: movieData.country || "Rwanda",
+      quality: "HD",
+      tags: movieData.tags || ["direct-upload", "community"],
+      views: 0,
+      likes: 0,
+      commentsCount: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isFeatured: false
+    };
+
+    db.movies.push(newMovie);
+
+    // Auto create a chat room for it
+    const newRoom: any = {
+      id: `room-${id}`,
+      movieId: id,
+      roomName: `${newMovie.title} Discussion`,
+      isActive: true,
+      createdAt: new Date().toISOString()
+    };
+    db.chatRooms.push(newRoom);
+
+    // Dispatch global system-wide user notification
+    if (!db.notifications) {
+      db.notifications = [];
+    }
+    db.notifications.push({
+      id: "notif-" + Math.random().toString(36).substring(2, 9),
+      movieId: id,
+      title: "New Community Upload! 🎬",
+      body: `"${newMovie.title}" is ready to stream and download! Click to join.`,
       isReadBy: [],
       createdAt: new Date().toISOString()
     });
@@ -804,21 +1119,22 @@ self.addEventListener('fetch', event => {
   });
 
   // Upload Simulation handler (handles movie posters/file name registration)
-  app.post('/api/upload', (req, res) => {
-    const { fileName, fileContent, fileType } = req.body;
+  app.post('/api/upload', requireAuth, (req, res) => {
+    const { fileName, fileContent } = req.body;
 
     if (!fileName || !fileContent) {
       return res.status(400).json({ error: "File data is incomplete" });
     }
 
     try {
-      // Decode and save to /uploads folder
-      const matches = fileContent.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      // Decode and save to /uploads folder via rapid non-regex split checks to support massive movies/books
       let buffer: Buffer;
-      let finalName = Date.now() + "_" + fileName.replace(/\s+/g, "_");
+      const finalName = Date.now() + "_" + fileName.replace(/\s+/g, "_");
+      const base64Index = fileContent.indexOf(';base64,');
 
-      if (matches && matches.length === 3) {
-        buffer = Buffer.from(matches[2], 'base64');
+      if (base64Index !== -1) {
+        const base64Data = fileContent.substring(base64Index + 8);
+        buffer = Buffer.from(base64Data, 'base64');
         fs.writeFileSync(path.join(UPLOADS_DIR, finalName), buffer);
       } else {
         // Plain string fallback
@@ -901,10 +1217,17 @@ self.addEventListener('fetch', event => {
     res.json({ success: true, comment: newComment });
   });
 
-  app.delete('/api/comments/:id', requireAdmin, (req, res) => {
+  app.delete('/api/comments/:id', (req: any, res) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Access denied. Authentication required." });
+    }
     const db = readDatabase();
     const comment = db.comments.find((c: any) => c.id === req.params.id);
     if (!comment) return res.status(404).json({ error: "Comment not found" });
+
+    if (req.user.role !== 'admin' && String(req.user.id) !== String(comment.userId)) {
+      return res.status(403).json({ error: "Access denied. You can only delete your own comments." });
+    }
 
     db.comments = db.comments.filter((c: any) => c.id !== req.params.id);
 
@@ -921,14 +1244,25 @@ self.addEventListener('fetch', event => {
   // Documents CRUD
   app.get('/api/documents', (req, res) => {
     const db = readDatabase();
-    res.json(db.documents);
+    const documentsWithDownloads = (db.documents || []).map((doc: any) => {
+      const downloadsCount = db.downloads ? db.downloads.filter((down: any) => down.itemId === doc.id && down.itemType === 'document').length : 0;
+      return {
+        ...doc,
+        downloadsCount
+      };
+    });
+    res.json(documentsWithDownloads);
   });
 
   app.get('/api/documents/:id', (req, res) => {
     const db = readDatabase();
     const doc = db.documents.find((d: any) => d.id === req.params.id);
     if (!doc) return res.status(404).json({ error: "Document not found" });
-    res.json(doc);
+    const downloadsCount = db.downloads ? db.downloads.filter((down: any) => down.itemId === doc.id && down.itemType === 'document').length : 0;
+    res.json({
+      ...doc,
+      downloadsCount
+    });
   });
 
   app.post('/api/documents', requireAdmin, (req, res) => {
@@ -953,6 +1287,46 @@ self.addEventListener('fetch', event => {
     db.documents.push(newDoc);
     writeDatabase(db);
     res.json({ success: true, document: newDoc });
+  });
+
+  app.post('/api/documents/bulk', requireAdmin, (req, res) => {
+    const docsData = req.body.documents;
+    if (!docsData || !Array.isArray(docsData)) {
+      return res.status(400).json({ error: "Invalid documents array payload" });
+    }
+
+    const db = readDatabase();
+    const importedDocs: any[] = [];
+
+    for (const docData of docsData) {
+      if (!docData.title) continue;
+
+      const titleStr = String(docData.title).trim();
+      const id = docData.id || "doc-" + Math.random().toString(36).substring(2, 9);
+
+      const newDoc: any = {
+        id,
+        title: titleStr,
+        description: docData.description ? String(docData.description).trim() : "No description provided.",
+        file_path: docData.file_path ? String(docData.file_path).trim() : "",
+        download_link: docData.download_link ? String(docData.download_link).trim() : "https://contents.meetup.com/sample.pdf",
+        thumbnail: docData.thumbnail ? String(docData.thumbnail).trim() : "https://images.unsplash.com/photo-1507668077129-56e32842fceb?w=400",
+        subject: docData.subject ? String(docData.subject).trim() : "General",
+        class_level: docData.class_level ? String(docData.class_level).trim() : "Any",
+        year: Number(docData.year) || new Date().getFullYear(),
+        document_type: docData.document_type ? String(docData.document_type).trim() : "PDF",
+        createdAt: docData.createdAt || new Date().toISOString()
+      };
+
+      db.documents.push(newDoc);
+      importedDocs.push(newDoc);
+    }
+
+    if (importedDocs.length > 0) {
+      writeDatabase(db);
+    }
+
+    res.json({ success: true, count: importedDocs.length, documents: importedDocs });
   });
 
   app.delete('/api/documents/:id', requireAdmin, (req, res) => {
@@ -1215,6 +1589,17 @@ self.addEventListener('fetch', event => {
       genreData,
       popularMovies
     });
+  });
+
+  // Serve the dynamic Ubuntu Flimsy favicon/logo
+  app.get(['/favicon.ico', '/favicon.png', '/logo.jpg'], (req, res) => {
+    const logoPath = path.join(process.cwd(), 'src', 'assets', 'images', 'ubuntu_flimsy_logo_1782416683077.jpg');
+    if (fs.existsSync(logoPath)) {
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.sendFile(logoPath);
+    } else {
+      res.status(404).end();
+    }
   });
 
   // --- VITE MIDDLEWARE CONFIGURATION ---

@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Enable the server-side microservice to synchronize the sqlite/file-database seamlessly
+    match /ubuntu_flimsy_data/{key} {
+      allow read, write: if true;
+    }
+    
+    // Default-deny for any other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

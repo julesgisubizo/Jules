@@ -4,8 +4,9 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Volume2, Maximize, Share2, Download, Heart, ThumbsUp, Send, Trash2, ShieldAlert, Sparkles, AlertTriangle, Users, ArrowLeft, Check } from 'lucide-react';
+import { Play, Pause, Volume2, Maximize, Share2, Download, Heart, ThumbsUp, Send, Trash2, ShieldAlert, Sparkles, AlertTriangle, Users, ArrowLeft, Check, MessageSquare, Tv } from 'lucide-react';
 import { Movie, ChatRoom, ChatMessage, UserRole } from '../types';
+import { apiFetch as fetch } from '../apiFetch';
 
 interface WatchPartyProps {
   movie: Movie;
@@ -88,9 +89,7 @@ export default function WatchParty({
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [bufferState, setBufferState] = useState(false);
-  const [activePlayer, setActivePlayer] = useState<'video' | 'iframe'>(
-    isEmbedLikely(movie.watch_link) ? 'iframe' : 'video'
-  );
+  const [activePlayer, setActivePlayer] = useState<'video' | 'iframe'>('iframe');
 
   // Chat/Room State
   const [room, setRoom] = useState<ChatRoom | null>(null);
@@ -102,6 +101,116 @@ export default function WatchParty({
   const [showShareBadge, setShowShareBadge] = useState(false);
   const [toastMsg, setToastMsg] = useState<{ type: 'error' | 'success' | 'info'; text: string } | null>(null);
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+
+  // Seasons & Episodes selection state
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(
+    (movie.seasons && movie.seasons[0]?.id) || null
+  );
+  const [selectedEpisodeId, setSelectedEpisodeId] = useState<string | null>(
+    (movie.seasons && movie.seasons[0]?.episodes[0]?.id) || null
+  );
+
+  const [movieComments, setMovieComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  const fetchMovieComments = React.useCallback(() => {
+    if (!movie.id) return;
+    fetch(`/api/comments?movieId=${movie.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          // Sort comments chronologically descending (newest first)
+          const sorted = data.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          setMovieComments(sorted);
+        }
+      })
+      .catch(console.error);
+  }, [movie.id]);
+
+  useEffect(() => {
+    fetchMovieComments();
+    const interval = setInterval(fetchMovieComments, 4000);
+    return () => clearInterval(interval);
+  }, [fetchMovieComments]);
+
+  const handlePostComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) {
+      triggerToast('error', 'You must be logged in to leave a comment.');
+      return;
+    }
+    const txt = newComment.trim();
+    if (!txt) return;
+
+    setIsSubmittingComment(true);
+    fetch('/api/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        movieId: movie.id,
+        content: txt
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        setIsSubmittingComment(false);
+        if (data.success) {
+          setNewComment('');
+          fetchMovieComments();
+          triggerToast('success', 'Thank you! Comment posted successfully.');
+        } else {
+          triggerToast('error', data.error || 'Failed to submit comment.');
+        }
+      })
+      .catch(() => {
+        setIsSubmittingComment(false);
+        triggerToast('error', 'Network error posting comment.');
+      });
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    if (!currentUser) return;
+    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+
+    fetch(`/api/comments/${commentId}`, {
+      method: 'DELETE'
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          fetchMovieComments();
+          triggerToast('success', 'Comment deleted successfully.');
+        } else {
+          triggerToast('error', data.error || 'Failed to delete comment.');
+        }
+      })
+      .catch(() => {
+        triggerToast('error', 'Network error deleting comment.');
+      });
+  };
+
+  // Keep track of previous movie ID to only reset season/episode states when the whole movie changes, NOT on simple in-place polling updates
+  const prevMovieIdRef = useRef<string | null>(null);
+
+  // Synchronize season/episode when movie property changes
+  useEffect(() => {
+    if (movie) {
+      if (prevMovieIdRef.current !== movie.id) {
+        prevMovieIdRef.current = movie.id;
+        setSelectedSeasonId((movie.seasons && movie.seasons[0]?.id) || null);
+        setSelectedEpisodeId((movie.seasons && movie.seasons[0]?.episodes[0]?.id) || null);
+      }
+    } else {
+      prevMovieIdRef.current = null;
+    }
+  }, [movie]);
+
+  const currentSeason = movie.seasons?.find(s => s.id === selectedSeasonId);
+  const currentEpisode = currentSeason?.episodes?.find(e => e.id === selectedEpisodeId) || movie.seasons?.[0]?.episodes?.[0];
+
+  const currentWatchLink = currentEpisode?.watch_link || movie.watch_link;
+  const currentDownloadLink = currentEpisode?.download_link || movie.download_link;
 
   const triggerToast = (type: 'error' | 'success' | 'info', text: string) => {
     setToastMsg({ type, text });
@@ -387,11 +496,34 @@ export default function WatchParty({
   };
 
   const copyShareLink = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
-      setShowShareBadge(true);
-      setTimeout(() => setShowShareBadge(false), 2500);
-    });
+    const watchUrl = `${window.location.origin}${window.location.pathname}?watch=${movie.id}`;
+    const shareText = `🍿 Watch "${movie.title}" on Ubuntu Flimsy!
+
+📺 Stream directly: ${watchUrl}
+🎬 Cover Image: ${movie.poster_image || movie.cover_image || 'No cover image'}`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: movie.title,
+        text: `Watch "${movie.title}" on Ubuntu Flimsy!`,
+        url: watchUrl
+      })
+      .then(() => {
+        setShowShareBadge(true);
+        setTimeout(() => setShowShareBadge(false), 2500);
+      })
+      .catch(() => {
+        navigator.clipboard.writeText(shareText).then(() => {
+          setShowShareBadge(true);
+          setTimeout(() => setShowShareBadge(false), 2500);
+        });
+      });
+    } else {
+      navigator.clipboard.writeText(shareText).then(() => {
+        setShowShareBadge(true);
+        setTimeout(() => setShowShareBadge(false), 2500);
+      });
+    }
   };
 
   const formatVideoTime = (secs: number) => {
@@ -421,29 +553,10 @@ export default function WatchParty({
           {/* Player Mode Switcher Tab */}
           <div className="flex items-center justify-between pb-1">
             <span className="text-xs font-mono text-orange-400 uppercase tracking-widest font-bold">🎬 active media channel</span>
-            <div className="flex items-center space-x-1.5 p-0.5 bg-[#1b0820] border border-[#3e114a] rounded-lg">
-              <button
-                type="button"
-                onClick={() => setActivePlayer('video')}
-                className={`px-3 py-1 text-[10px] font-bold font-mono uppercase tracking-wider rounded transition-all cursor-pointer ${
-                  activePlayer === 'video'
-                    ? 'bg-[#e95420] text-white shadow-md font-extrabold font-sans'
-                    : 'text-gray-400 hover:text-white font-sans font-medium'
-                }`}
-              >
-                HTML5 Video tag
-              </button>
-              <button
-                type="button"
-                onClick={() => setActivePlayer('iframe')}
-                className={`px-3 py-1 text-[10px] font-bold font-mono uppercase tracking-wider rounded transition-all cursor-pointer ${
-                  activePlayer === 'iframe'
-                    ? 'bg-[#e95420] text-white shadow-md font-extrabold font-sans'
-                    : 'text-gray-400 hover:text-white font-sans font-medium'
-                }`}
-              >
-                External Frame Embed
-              </button>
+            <div className="flex items-center space-x-1.5 px-3 py-1 bg-[#1b0820]/80 border border-[#3e114a] rounded-lg">
+              <span className="text-[10px] font-bold font-mono text-emerald-400 uppercase tracking-wider">
+                ⚡ EXTERNALLY EMBEDDED FRAME PLAYER
+              </span>
             </div>
           </div>
 
@@ -455,7 +568,7 @@ export default function WatchParty({
             {/* Conditional Media Player */}
             {activePlayer === 'iframe' ? (
               <iframe
-                src={getEmbedLink(movie.watch_link)}
+                src={getEmbedLink(currentWatchLink) || undefined}
                 className="w-full aspect-video object-contain"
                 title={`${movie.title} Live Stream`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -465,7 +578,7 @@ export default function WatchParty({
             ) : (
               <video
                 ref={videoRef}
-                src={movie.watch_link}
+                src={(currentWatchLink && currentWatchLink.startsWith('/') ? window.location.origin + currentWatchLink : currentWatchLink) || undefined}
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
                 onClick={togglePlay}
@@ -548,7 +661,7 @@ export default function WatchParty({
 
                     {/* Watch stream in new tab bypass redirect */}
                     <a
-                      href={movie.watch_link}
+                      href={currentWatchLink}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 text-orange-400 hover:text-orange-500 hover:bg-[#250d2e] rounded transition"
@@ -571,7 +684,7 @@ export default function WatchParty({
                   <span>Playback controls are handled directly inside the third-party iframe embed above.</span>
                 </span>
                 <a
-                  href={movie.watch_link}
+                  href={currentWatchLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-3 py-1.5 bg-[#e95420]/15 hover:bg-[#e95420]/25 rounded text-orange-400 border border-[#e95420]/35 transition font-sans text-[11px] font-bold"
@@ -582,12 +695,98 @@ export default function WatchParty({
             )}
           </div>
 
+          {/* SEASONS & EPISODES ACCORDION/SELECTOR */}
+          {movie.seasons && movie.seasons.length > 0 && (
+            <div className="bg-[#120415] border border-[#270b30] rounded-xl p-5 space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pb-3 border-b border-[#250d2e]">
+                <div>
+                  <h3 className="text-sm font-bold font-ubuntu text-white flex items-center space-x-2">
+                    <Tv className="w-4 h-4 text-orange-400 animate-pulse" />
+                    <span>Watch Series Episodes</span>
+                  </h3>
+                  <p className="text-[11px] text-gray-400 font-sans mt-0.5">
+                    Currently playing: <span className="text-[#e95420] font-medium">{currentEpisode ? `Season ${currentSeason?.seasonNumber} Episode ${currentEpisode.episodeNumber}: ${currentEpisode.title}` : 'Loading...'}</span>
+                  </p>
+                </div>
+
+                {/* Season selection pill tabs */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {movie.seasons.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => {
+                        setSelectedSeasonId(s.id);
+                        if (s.episodes && s.episodes.length > 0) {
+                          setSelectedEpisodeId(s.episodes[0].id);
+                        } else {
+                          setSelectedEpisodeId(null);
+                        }
+                      }}
+                      className={`px-3 py-1 rounded text-xs transition duration-200 uppercase font-mono tracking-wider font-semibold cursor-pointer ${
+                        selectedSeasonId === s.id
+                          ? 'bg-[#e95420] text-white shadow font-bold'
+                          : 'bg-[#1b0820] text-gray-400 hover:text-white hover:bg-purple-950/30 border border-[#300e3a]'
+                      }`}
+                    >
+                      {s.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Episodes grid for the selected season */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {currentSeason && currentSeason.episodes && currentSeason.episodes.length > 0 ? (
+                  currentSeason.episodes.map((ep) => {
+                    const isActive = selectedEpisodeId === ep.id;
+                    return (
+                      <button
+                        key={ep.id}
+                        onClick={() => setSelectedEpisodeId(ep.id)}
+                        className={`p-3 rounded-lg border text-left transition flex flex-col justify-between h-20 group relative overflow-hidden cursor-pointer ${
+                          isActive
+                            ? 'bg-[#e95420]/15 border-[#e95420] text-white font-extrabold'
+                            : 'bg-[#1b0820]/40 hover:bg-[#1b0820]/90 border-[#2d0b38] hover:border-orange-500/30 text-gray-400'
+                        }`}
+                      >
+                        <div className="absolute top-0 right-0 w-8 h-8 bg-[#e95420]/10 rounded-bl-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Play className="w-2.5 h-2.5 text-orange-400 ml-1 mt-[-3px]" />
+                        </div>
+                        
+                        <span className="text-[10px] font-mono font-bold tracking-widest text-[#aea79f] uppercase mb-1">
+                          Episode {ep.episodeNumber}
+                        </span>
+                        <span className={`text-xs font-semibold truncate w-full ${isActive ? 'text-[#e95420]' : 'text-zinc-200 group-hover:text-white'}`}>
+                          {ep.title}
+                        </span>
+                        {ep.duration && (
+                          <span className="text-[9px] font-mono text-zinc-500 mt-0.5">
+                            {ep.duration}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })
+                ) : (
+                  <p className="text-xs text-zinc-500 font-mono col-span-full py-4 text-center">No episodes found in this season.</p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Film Details Info Box */}
           <div className="bg-[#120415] border border-[#270b30] rounded-xl p-5 space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="p-1 bg-[#e95420] text-[10px] font-bold text-white rounded uppercase font-mono">{movie.quality}</span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                    movie.seasons && movie.seasons.length > 0
+                      ? 'bg-purple-900/60 text-purple-300 border border-purple-800/45'
+                      : 'bg-teal-950/60 text-teal-400 border border-teal-850/45'
+                  }`}>
+                    {movie.seasons && movie.seasons.length > 0 ? 'Season' : 'Film'}
+                  </span>
                   <span className="text-xs text-orange-400 font-mono tracking-widest">{movie.country} • {movie.year}</span>
                   <span className="px-2 py-0.5 bg-emerald-950/40 text-emerald-400 border border-emerald-900/40 rounded text-[10px] font-mono font-medium flex items-center space-x-1">
                     <Check className="w-3 h-3 text-emerald-400" />
@@ -641,14 +840,14 @@ export default function WatchParty({
                 </button>
 
                 {/* Real Stream Download link */}
-                {movie.download_link && (
+                {currentDownloadLink && (
                   <a
-                    href={movie.download_link}
+                    href={currentDownloadLink.startsWith('/') ? window.location.origin + currentDownloadLink : currentDownloadLink}
                     onClick={() => onTrackDownload(movie.id, 'movie')}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 rounded-full bg-[#e95420] text-white hover:bg-[#ff6c3a] shadow flex items-center justify-center transition"
-                    title="Download Film"
+                    title={currentEpisode ? `Download Episode: ${currentEpisode.title}` : "Download Movie"}
                     id="link-download-movie"
                   >
                     <Download className="w-4 h-4" />
@@ -694,16 +893,16 @@ export default function WatchParty({
                 </p>
                 <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-[10px]">
                   <a
-                    href={movie.watch_link}
+                    href={currentWatchLink && currentWatchLink.startsWith('/') ? window.location.origin + currentWatchLink : currentWatchLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-2.5 py-1 bg-[#e95420]/15 border border-[#e95420]/30 hover:bg-[#e95420]/25 rounded text-[#ffc8b5] transition-colors inline-block"
                   >
                     🚀 Direct Stream Mirror ↗
                   </a>
-                  {movie.download_link && (
+                  {currentDownloadLink && (
                     <a
-                      href={movie.download_link}
+                      href={currentDownloadLink.startsWith('/') ? window.location.origin + currentDownloadLink : currentDownloadLink}
                       download={`${movie.slug || movie.id}.mp4`}
                       onClick={() => onTrackDownload(movie.id, 'movie')}
                       target="_blank"
@@ -716,6 +915,123 @@ export default function WatchParty({
                 </div>
               </div>
             </div>
+
+            {/* 📋 Dedicated Movie Review / Comment section */}
+            <div className="bg-[#120415] border border-[#270b30] rounded-xl p-5 space-y-4 mt-5 font-sans animate-fade-in" id="movie-reviews-comments-section">
+              <div className="flex items-center justify-between border-b border-[#23092b] pb-3">
+                <h3 className="font-ubuntu text-sm font-bold text-white flex items-center space-x-2">
+                  <MessageSquare className="w-4 h-4 text-[#e95420]" />
+                  <span>Viewer Comments & Reviews ({movieComments.length})</span>
+                </h3>
+                <span className="text-[9px] font-mono text-[#e95420] bg-orange-950/10 border border-[#e95420]/20 px-2 py-0.5 rounded uppercase font-semibold">
+                  Real-time
+                </span>
+              </div>
+
+              {/* Leave a Comment form */}
+              <form onSubmit={handlePostComment} className="space-y-3">
+                {currentUser ? (
+                  <div className="flex gap-3 items-start">
+                    <img
+                      src={currentUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
+                      alt={currentUser.name}
+                      className="w-7 h-7 rounded-full border border-orange-500/10 object-cover flex-shrink-0"
+                    />
+                    <div className="flex-1 space-y-2 text-right">
+                      <textarea
+                        rows={2}
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Write a movie review or leave a comment while watching..."
+                        maxLength={1000}
+                        required
+                        className="w-full text-xs p-3 rounded-lg bg-[#1a081e] border border-[#40124e]/50 focus:border-[#e95420] text-gray-100 placeholder-zinc-500 focus:outline-none transition focus:ring-1 focus:ring-[#e95420]/30"
+                      />
+                      <button
+                        type="submit"
+                        disabled={isSubmittingComment || !newComment.trim()}
+                        className="px-4 py-1.5 bg-[#e95420] hover:bg-[#ff6c3a] disabled:bg-[#e95420]/45 disabled:text-white/40 text-white font-semibold text-xs rounded-lg transition duration-200 cursor-pointer shadow hover:shadow-orange-500/15"
+                      >
+                        {isSubmittingComment ? 'Posting...' : 'Post Comment'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-[#1d0a22]/55 border border-[#3c0f4b]/30 rounded-lg text-center">
+                    <p className="text-xs text-zinc-400">
+                      You must be{' '}
+                      <button
+                        type="button"
+                        onClick={() => onNavigate('settings')}
+                        className="text-[#e95420] hover:underline font-semibold font-ubuntu cursor-pointer"
+                      >
+                        logged in
+                      </button>{' '}
+                      to leave a comment or movie review.
+                    </p>
+                  </div>
+                )}
+              </form>
+
+              {/* Comments Feed List */}
+              <div className="space-y-3.5 max-h-[350px] overflow-y-auto pr-1 scrollbar-thin">
+                {movieComments.length === 0 ? (
+                  <div className="py-8 text-center text-zinc-500">
+                    <MessageSquare className="w-8 h-8 text-[#2f1039] mx-auto mb-2" />
+                    <p className="text-xs">No reviews or comments yet. Be the first to share your experience!</p>
+                  </div>
+                ) : (
+                  movieComments.map((comment) => {
+                    const isMyComment = currentUser && String(comment.userId) === String(currentUser.id);
+                    const isUserAdmin = currentUser?.role === UserRole.ADMIN;
+                    return (
+                      <div
+                        key={comment.id}
+                        className="p-3 bg-[#17061a]/60 border border-[#2d0b38]/40 hover:border-[#3d0f4d]/50 rounded-lg flex items-start space-x-3 text-left transition duration-200"
+                      >
+                        <img
+                          src={comment.userAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100'}
+                          alt={comment.userName}
+                          className="w-7 h-7 rounded-full border border-orange-500/10 object-cover flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-gray-200 font-ubuntu">
+                              {comment.userName}
+                            </span>
+                            <span className="text-[9px] text-zinc-500 font-mono">
+                              {new Date(comment.createdAt).toLocaleDateString([], {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-300 leading-relaxed font-sans break-words whitespace-pre-line">
+                            {comment.content}
+                          </p>
+
+                          {/* Delete Action button optionally shown */}
+                          {(isMyComment || isUserAdmin) && (
+                            <div className="pt-1 flex justify-end">
+                              <button
+                                onClick={() => handleDeleteComment(comment.id)}
+                                className="text-[10px] text-red-400 hover:text-red-500 font-mono flex items-center space-x-1 cursor-pointer transition"
+                                title="Delete comment"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                <span>Delete review</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -726,8 +1042,8 @@ export default function WatchParty({
           <div className="p-4.5 border-b border-[#250d2e] flex items-center justify-between">
             <div>
               <h2 className="text-sm font-bold text-white flex items-center space-x-1.5 font-ubuntu">
-                <Sparkles className="w-4 h-4 text-[#e95420] animate-pulse" />
-                <span>Sync Watch Party</span>
+                <MessageSquare className="w-4 h-4 text-[#e95420] animate-pulse" />
+                <span>Comments & Watch Chat</span>
               </h2>
               <div className="text-[10px] text-orange-400 font-mono mt-0.5 flex items-center space-x-1">
                 <Users className="w-3 h-3" />
@@ -745,7 +1061,7 @@ export default function WatchParty({
             {onlineParticipants.slice(0, 4).map((p, i) => (
               <img
                 key={i}
-                src={p.avatar}
+                src={p.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80'}
                 alt={p.name}
                 className="w-5 h-5 rounded-full border border-gray-600 object-cover flex-shrink-0"
                 title={p.name}
@@ -782,7 +1098,7 @@ export default function WatchParty({
                 return (
                   <div key={msg.id} className={`flex items-start space-x-2.5 text-left ${isMe ? 'flex-row-reverse space-x-reverse' : ''}`}>
                     <img
-                      src={msg.userAvatar}
+                      src={msg.userAvatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80'}
                       alt={msg.userName}
                       className="w-7 h-7 rounded-full border border-orange-500/10 object-cover flex-shrink-0"
                     />

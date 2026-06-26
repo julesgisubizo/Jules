@@ -47,12 +47,16 @@ export default function DocumentCard({ doc, onClick, onDownload }: DocumentCardP
 
         {/* Informative details */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-1.5 mb-1.5">
+          <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
             <span className={`px-2 py-0.5 text-[9px] font-bold border rounded uppercase font-mono ${getTypeColor(doc.document_type)}`}>
               {doc.document_type}
             </span>
             <span className="px-1.5 py-0.5 text-[9px] font-mono text-gray-400 bg-[#240a2d] rounded">
               {doc.class_level}
+            </span>
+            <span className="px-1.5 py-0.5 text-[9px] font-mono text-[#e95420] bg-[#e95420]/10 border border-[#e95420]/20 rounded flex items-center space-x-1 ml-auto shrink-0 shadow-sm" title="Total community downloads">
+              <Download className="w-2.5 h-2.5 text-[#e95420]" />
+              <span>{doc.downloadsCount || 0} downloads</span>
             </span>
           </div>
 
